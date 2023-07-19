@@ -1,0 +1,15 @@
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;}
+  
+  .Tilt {
+    background: linear-gradient(to right, rgb(225, 203, 204), rgb(191, 120, 196));
+    width: 150px;
+    height: 160px;
+    padding: 5px;
+    justify-content: center;
+  }
+
+    /* Additional styles if needed */
