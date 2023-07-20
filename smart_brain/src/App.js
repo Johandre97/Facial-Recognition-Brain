@@ -5,18 +5,108 @@ import Logo from './components/logo/Logo';
 import ImageLinkForm from './components/imageLinkForm/ImageLinkForm';
 import Rank from './components/rank/rank';
 import ParticlesBg from "particles-bg";
-
+import FaceRecognition from './components/faceRecognition/FaceRecognition';
 
 class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      input: '',
+      boxes: [] // Initialize with an empty array to store multiple bounding boxes
+    }
+  }
+
+  calculateFaceLocation = (boundingBox) => {
+    const image = document.getElementById('inputImage');
+    const width = Number(image.width);
+    const height = Number(image.height);
+    return {
+      leftCol: boundingBox.left_col * width,
+      topRow: boundingBox.top_row * height,
+      rightCol: width - (boundingBox.right_col * width),
+      bottomRow: height - (boundingBox.bottom_row * height)
+    };
+  }
+
+  displayFaceBoxes = (boxes) => {
+    this.setState({ boxes: boxes });
+  }
+
+  onInputChange = (event) => {
+    this.setState({ input: event.target.value });
+  }
+
+  onButtonSubmit = () => {
+    console.log('Click');
+    const PAT = '80681ca49bdd48e5920c6e0b849b12c0';
+    // Specify the correct user_id/app_id pairings
+    const USER_ID = 'clarifai';       
+    const APP_ID = 'main';
+    // Change these to whatever model and image URL you want to use
+    const MODEL_ID = 'face-detection';
+    const MODEL_VERSION_ID = '6dc7e46bc9124c5c8824be4822abe105';    
+    const IMAGE_URL = this.state.input;
+
+    const raw = JSON.stringify({
+        "user_app_id": {
+            "user_id": USER_ID,
+            "app_id": APP_ID
+        },
+        "inputs": [
+            {
+                "data": {
+                    "image": {
+                        "url": IMAGE_URL
+                    }
+                }
+            }
+        ]
+    });
+
+    const requestOptions = {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Key ' + PAT
+        },
+        body: raw
+    };
+
+    this.setState({ IMAGE_URL: this.state.input });
+    // NOTE: MODEL_VERSION_ID is optional, you can also call prediction with the MODEL_ID only
+    // https://api.clarifai.com/v2/models/{YOUR_MODEL_ID}/outputs
+    // this will default to the latest version_id
+
+    fetch("https://api.clarifai.com/v2/models/" + MODEL_ID + "/versions/" + MODEL_VERSION_ID + "/outputs", requestOptions)
+      .then(response => response.json()) // Parse the response as JSON
+      .then(data => {
+        // Access the bounding box information for each region (face)
+        const regions = data.outputs[0].data.regions;
+        if (regions && regions.length > 0) {
+          const boundingBoxes = regions.map(region => {
+            const boundingBox = region.region_info.bounding_box;
+            console.log("Bounding Box:", boundingBox);
+            return this.calculateFaceLocation(boundingBox);
+          });
+          this.displayFaceBoxes(boundingBoxes);
+        } else {
+          console.log("No bounding box data found in the response.");
+        }
+      })
+      .catch(error => console.log('error', error));
+  }
+
   render() {  
-    // const particleColor = ['#e1cbcc', '#bf78c4', '#eeddde', '#ccb5b7', '#d59fdb', '#a75ba9'];
     return (
       <div className="App">
         <Navigation />
         <Logo />
         <Rank />
-        <ImageLinkForm></ImageLinkForm>
-        {/*<FaceRecognition></FaceRecognition>} */}
+        <ImageLinkForm 
+        onInputChange={this.onInputChange} 
+        onButtonSubmit={this.onButtonSubmit}>          
+        </ImageLinkForm>
+        <FaceRecognition boxes={this.state.boxes} IMAGE_URL={this.state.IMAGE_URL}></FaceRecognition>
         <ParticlesBg color={'#FFFFFF'} type="cobweb" bg={true} />
       </div>
     );
