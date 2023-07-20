@@ -2,17 +2,21 @@ import React, { Component } from 'react';
 import './App.css';
 import Navigation from './components/navigation/Navigation';
 import Logo from './components/logo/Logo';
+import Signin from './components/signin/Signin';
 import ImageLinkForm from './components/imageLinkForm/ImageLinkForm';
 import Rank from './components/rank/rank';
 import ParticlesBg from "particles-bg";
 import FaceRecognition from './components/faceRecognition/FaceRecognition';
+import Register from './components/register/Register.js';
 
 class App extends Component {
   constructor() {
     super();
     this.state = {
       input: '',
-      boxes: [] // Initialize with an empty array to store multiple bounding boxes
+      boxes: [],
+      route: 'signin',
+      isSignedIn : false
     }
   }
 
@@ -37,7 +41,6 @@ class App extends Component {
   }
 
   onButtonSubmit = () => {
-    console.log('Click');
     const PAT = '80681ca49bdd48e5920c6e0b849b12c0';
     // Specify the correct user_id/app_id pairings
     const USER_ID = 'clarifai';       
@@ -85,7 +88,6 @@ class App extends Component {
         if (regions && regions.length > 0) {
           const boundingBoxes = regions.map(region => {
             const boundingBox = region.region_info.bounding_box;
-            console.log("Bounding Box:", boundingBox);
             return this.calculateFaceLocation(boundingBox);
           });
           this.displayFaceBoxes(boundingBoxes);
@@ -96,18 +98,38 @@ class App extends Component {
       .catch(error => console.log('error', error));
   }
 
+  onRouteChange = (route) => {
+    if (route === 'signout') {
+      this.setState({isSignedIn: false})
+    } else if (route === 'home') {
+      this.setState({isSignedIn: true})
+    }
+    this.setState({route : route});
+  }
+
   render() {  
+    const { isSignedIn, IMAGE_URL, route, boxes } = this.state;
     return (
       <div className="App">
-        <Navigation />
-        <Logo />
-        <Rank />
-        <ImageLinkForm 
-        onInputChange={this.onInputChange} 
-        onButtonSubmit={this.onButtonSubmit}>          
-        </ImageLinkForm>
-        <FaceRecognition boxes={this.state.boxes} IMAGE_URL={this.state.IMAGE_URL}></FaceRecognition>
-        <ParticlesBg color={'#FFFFFF'} type="cobweb" bg={true} />
+        <Navigation isSignedIn={ isSignedIn } onRouteChange = {this.onRouteChange} />
+        {  route  === 'home' ?
+          <div> 
+            <Logo />
+            <Rank />
+            <ImageLinkForm 
+            onInputChange={this.onInputChange} 
+            onButtonSubmit={this.onButtonSubmit}>          
+            </ImageLinkForm>
+            <FaceRecognition boxes={boxes} 
+            IMAGE_URL={ IMAGE_URL }></FaceRecognition>
+            <ParticlesBg color={'#FFFFFF'} type="cobweb" bg={true} />
+          </div>
+        :  (
+          route === 'signin'
+           ? <Signin onRouteChange = {this.onRouteChange}/>
+           : <Register onRouteChange={this.onRouteChange}/>
+        )
+        }
       </div>
     );
   }
