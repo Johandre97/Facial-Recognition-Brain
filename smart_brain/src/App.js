@@ -14,10 +14,28 @@ class App extends Component {
     super();
     this.state = {
       input: '',
+      imageUrl: '',
       boxes: [],
       route: 'signin',
-      isSignedIn : false
+      isSignedIn : false,
+      user: {
+        id: '',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: ''
+      }
     }
+  }
+
+  loadUser = (data) => {
+    this.setState({user: {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      entries: data.entries,
+      joined: data.joined
+    }})
   }
 
   calculateFaceLocation = (boundingBox) => {
@@ -42,10 +60,8 @@ class App extends Component {
 
   onButtonSubmit = () => {
     const PAT = '80681ca49bdd48e5920c6e0b849b12c0';
-    // Specify the correct user_id/app_id pairings
     const USER_ID = 'clarifai';       
     const APP_ID = 'main';
-    // Change these to whatever model and image URL you want to use
     const MODEL_ID = 'face-detection';
     const MODEL_VERSION_ID = '6dc7e46bc9124c5c8824be4822abe105';    
     const IMAGE_URL = this.state.input;
@@ -56,15 +72,9 @@ class App extends Component {
             "app_id": APP_ID
         },
         "inputs": [
-            {
-                "data": {
-                    "image": {
-                        "url": IMAGE_URL
-                    }
-                }
-            }
-        ]
-    });
+            {"data": {"image": {"url": IMAGE_URL}}}
+          ]
+          });
 
     const requestOptions = {
         method: 'POST',
@@ -76,9 +86,6 @@ class App extends Component {
     };
 
     this.setState({ IMAGE_URL: this.state.input });
-    // NOTE: MODEL_VERSION_ID is optional, you can also call prediction with the MODEL_ID only
-    // https://api.clarifai.com/v2/models/{YOUR_MODEL_ID}/outputs
-    // this will default to the latest version_id
 
     fetch("https://api.clarifai.com/v2/models/" + MODEL_ID + "/versions/" + MODEL_VERSION_ID + "/outputs", requestOptions)
       .then(response => response.json()) // Parse the response as JSON
@@ -90,7 +97,22 @@ class App extends Component {
             const boundingBox = region.region_info.bounding_box;
             return this.calculateFaceLocation(boundingBox);
           });
+
           this.displayFaceBoxes(boundingBoxes);
+
+          if (data) {
+            fetch('http://localhost:3000/image', {
+              method: 'put',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({
+                  id: this.state.user.id,
+              })
+          })
+          .then(response => response.json())
+          .then(count => {
+            this.setState(Object.assign(this.state.user, { entries: count }))
+          })
+          }
         } else {
           console.log("No bounding box data found in the response.");
         }
@@ -115,7 +137,7 @@ class App extends Component {
         {  route  === 'home' ?
           <div> 
             <Logo />
-            <Rank />
+            <Rank name={this.state.user.name} entries = {this.state.user.entries}/>
             <ImageLinkForm 
             onInputChange={this.onInputChange} 
             onButtonSubmit={this.onButtonSubmit}>          
@@ -126,8 +148,9 @@ class App extends Component {
           </div>
         :  (
           route === 'signin'
-           ? <Signin onRouteChange = {this.onRouteChange}/>
-           : <Register onRouteChange={this.onRouteChange}/>
+           ? <Signin loadUser={this.loadUser} onRouteChange = {this.onRouteChange}/>
+           : <Register loadUser={this.loadUser} onRouteChange={this.onRouteChange}/>
+
         )
         }
       </div>
