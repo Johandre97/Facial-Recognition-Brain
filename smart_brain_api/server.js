@@ -1,20 +1,21 @@
 const express = require('express');
 const bcrypt = require('bcrypt-nodejs')
+const cors = require('cors')
 const app = express();
-
 
 //need the json parser module that is contained here for express to interpret JSON.
 // using express.json instead of the body parser module.
 app.use(express.urlencoded({extended: false}));
 app.use(express.json());
 
-
+app.use(cors())
 //this is the database that we will be comparing with.
 const database = {
     users: [
         {
             id: '123',
             name: 'john',
+            password: 'cookies',
             email: 'john@gmail.com',
             entries: 0,
             joined: new Date()
@@ -22,18 +23,19 @@ const database = {
         {
             id: '124',
             name: 'sally',
+            password: 'bannanas',
             email: 'sally@gmail.com',
             entries: 0,
             joined: new Date()
         }
     ],
-    login: [
-        {
-            id: '987',
-            hash: '',
-            email: 'john@gmail.com'
-        }
-    ]
+    // login: [
+    //     {
+    //         id: '987',
+    //         hash: '',
+    //         email: 'john@gmail.com'
+    //     }
+    // ]
 }
 
 app.get('/', (req, res) => {
@@ -42,13 +44,13 @@ app.get('/', (req, res) => {
 
 //sign in post module, compares with database email and password for a validation check.
 app.post('/signin', (req, res) => {
-    bcrypt.compare("apples", "$2a$10$MnCz.itBgJZvyTBTJBQxOu1vhb.BiTIkWaQyZufVhvxq3MpG5UEAq", function(err, res) {
-        // res == true
-        console.log('first guess', res)
-    });
-    bcrypt.compare("veggies", "$2a$10$MnCz.itBgJZvyTBTJBQxOu1vhb.BiTIkWaQyZufVhvxq3MpG5UEAq", function(err, res) {
-        console.log('second guess', res)
-    });
+    // bcrypt.compare("apples", "$2a$10$MnCz.itBgJZvyTBTJBQxOu1vhb.BiTIkWaQyZufVhvxq3MpG5UEAq", function(err, res) {
+    //     // res == true
+    //     console.log('first guess', res)
+    // });
+    // bcrypt.compare("veggies", "$2a$10$MnCz.itBgJZvyTBTJBQxOu1vhb.BiTIkWaQyZufVhvxq3MpG5UEAq", function(err, res) {
+    //     console.log('second guess', res)
+    // });
     if (req.body.email === database.users[0].email && 
         req.body.password === database.users[0].password) {
             res.json('success');
