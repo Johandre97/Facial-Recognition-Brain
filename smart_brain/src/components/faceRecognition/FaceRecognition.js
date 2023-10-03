@@ -2,6 +2,9 @@ import React from "react";
 import './FaceRecognition.css'
 
 const FaceRecognition = ({ IMAGE_URL, boxes }) => {
+  console.log('FaceRecognition component - props:', { IMAGE_URL, boxes });
+
+  console.log('Number of boxes:', boxes.length);
   return (
     <div className="center ma">
       <div className="absolute mt2">

@@ -1,3 +1,5 @@
+//server.js
+
 const express = require("express");
 const bcrypt = require("bcrypt-nodejs");
 const cors = require("cors");
@@ -8,6 +10,7 @@ const register = require("./controllers/register");
 const signin = require("./controllers/signin");
 const profile = require("./controllers/profile");
 const image = require("./controllers/image");
+const { handleApiCall, handleImage  } = require("./controllers/image");
 
 const db = knex({
   client: "pg",
@@ -55,6 +58,22 @@ app.get("/profile/:id", (req, res) => {
 //this will keep count of the user image submissions
 app.put("/image", (req, res) => {
   image.handleImage(req, res, db);
+});
+
+// Create a new endpoint for handling image URL requests
+app.post("/imageurl", (req, res) => {
+  const { imageUrl } = req.body;
+
+  // Call the handleApiCall function to process the image URL
+  handleApiCall(imageUrl)
+    .then((regions) => {
+      // Send the regions data as JSON
+      res.json({ boxes: regions });
+    })
+    .catch((error) => {
+      console.log('Error handling image URL:', error);
+      res.status(500).json({ error: 'Image URL processing failed' });
+    });
 });
 
 //npm listener for changes/debugging.
