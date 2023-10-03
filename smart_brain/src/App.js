@@ -9,6 +9,21 @@ import ParticlesBg from "particles-bg";
 import FaceRecognition from './components/faceRecognition/FaceRecognition';
 import Register from './components/register/Register.js';
 
+const initialState = {
+  input: '',
+  imageUrl: '',
+  boxes: [],
+  route: 'signin',
+  isSignedIn : false,
+  user: {
+    id: '',
+    name: '',
+    email: '',
+    entries: 0,
+    joined: ''
+  }
+}
+
 class App extends Component {
   constructor() {
     super();
@@ -112,6 +127,7 @@ class App extends Component {
           .then(count => {
             this.setState(Object.assign(this.state.user, { entries: count }))
           })
+          .catch(console.log)
           }
         } else {
           console.log("No bounding box data found in the response.");
@@ -122,7 +138,7 @@ class App extends Component {
 
   onRouteChange = (route) => {
     if (route === 'signout') {
-      this.setState({isSignedIn: false})
+      this.setState(initialState)
     } else if (route === 'home') {
       this.setState({isSignedIn: true})
     }
